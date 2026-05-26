@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanuda — Персональный подбор</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* ── Kanuda brand palette ── */
+    --mint-bg:      #D8F0F0;   /* page background — lightest mint */
+    --mint-light:   #E8F7F7;   /* card backgrounds */
+    --mint-mid:     #B8E4E4;   /* borders, dividers */
+    --mint-deep:    #6BBFBF;   /* accents, progress fill */
+    --mint-dark:    #3A9090;   /* primary accent, buttons hover */
+    --teal:         #2D7A7A;   /* strong accent */
+    --teal-light:   #EAF6F6;   /* subtle tints */
+
+    /* ── Silver / chrome accents ── */
+    --silver:       #B8C8CC;   /* borders with metallic feel */
+    --silver-light: #DDE8EA;   /* very light silver */
+    --silver-dark:  #7A9098;   /* muted text, labels */
+
+    /* ── Text ── */
+    --deep:         #1A3030;   /* headlines */
+    --charcoal:     #2A4848;   /* body text */
+    --muted:        #5A8080;   /* secondary text */
+    --hint:         #8AABAB;   /* hints, captions */
+
+    /* ── White ── */
+    --white:        #FFFFFF;
+    --white-soft:   #F4FAFA;   /* card surface */
+
+    /* ── Accent (kept for CTA) ── */
+    --accent:       #4AAFAF;
+    --accent-dark:  #2D8888;
+    --accent-pale:  #D0EEEE;
+    --accent-light: #A0D8D8;
+
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans:  'DM Sans', system-ui, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--mint-bg);
+    color: var(--charcoal);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Layout ─── */
+  .quiz-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  header {
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--mint-mid);
+    background: var(--white);
+    box-shadow: 0 1px 12px rgba(45,122,122,0.07);
+  }
+
+  .logo {
+    font-family: var(--serif);
+    font-size: 1.55rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    color: var(--deep);
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--mint-dark); }
+
+  .header-tag {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ─── Progress ─── */
+  .progress-bar-wrap {
+    height: 4px;
+    background: var(--mint-mid);
+    position: relative;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mint-deep), var(--teal));
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 2rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--hint);
+    background: var(--white);
+    border-bottom: 1px solid var(--silver-light);
+  }
+
+  /* ─── Main stage ─── */
+  .stage {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2.5rem 1.5rem 3rem;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--mint-mid);
+    border-radius: 24px;
+    padding: 2.75rem 3.25rem;
+    max-width: 680px;
+    width: 100%;
+    position: relative;
+    animation: fadeUp 0.4s ease both;
+    box-shadow: 0 4px 32px rgba(45,122,122,0.08);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mint-dark);
+    margin-bottom: 0.6rem;
+  }
+
+  .step-title {
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.25;
+    color: var(--deep);
+    margin-bottom: 0.4rem;
+  }
+
+  .step-subtitle {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.75rem;
+  }
+
+  /* ─── Options ─── */
+  .options-grid {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .options-grid.two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--white-soft);
+    border: 1.5px solid var(--silver-light);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: left;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    position: relative;
+  }
+
+  .option-btn:hover {
+    border-color: var(--mint-deep);
+    background: var(--teal-light);
+  }
+
+  .option-btn.selected {
+    border-color: var(--mint-dark);
+    background: var(--accent-pale);
+    color: var(--deep);
+  }
+
+  .option-btn.selected::after {
+    content: '';
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--mint-dark);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    background-size: 11px;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .option-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    width: 1.9rem;
+    text-align: center;
+  }
+
+  .option-text { flex: 1; line-height: 1.4; }
+  .option-sub {
+    font-size: 0.76rem;
+    color: var(--hint);
+    margin-top: 2px;
+  }
+
+  /* ─── Navigation ─── */
+  .nav-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-back {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.2rem;
+    background: transparent;
+    border: 1px solid var(--silver-light);
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 0.83rem;
+    color: var(--hint);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: var(--silver); color: var(--muted); }
+
+  .btn-next {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 2rem;
+    background: var(--teal);
+    border: none;
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-next:hover { background: var(--mint-dark); transform: translateX(2px); }
+  .btn-next:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  .btn-next.gold {
+    background: var(--mint-dark);
+    color: white;
+  }
+  .btn-next.gold:hover { background: var(--teal); }
+
+  /* ─── Micro-text ─── */
+  .micro-text {
+    margin-top: 1.25rem;
+    font-size: 0.73rem;
+    color: var(--hint);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ─── Splash screen ─── */
+  .splash {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .splash-ornament {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--mint-deep), var(--mint-dark));
+    margin: 0.9rem auto;
+    border-radius: 2px;
+  }
+
+  .splash-title {
+    font-family: var(--serif);
+    font-size: 2.8rem;
+    font-weight: 300;
+    color: var(--deep);
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+  }
+
+  .splash-lead {
+    font-size: 0.97rem;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 420px;
+    margin: 0 auto 0.5rem;
+  }
+
+  .splash-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin: 1.4rem 0 1.9rem;
+  }
+
+  .pill {
+    padding: 0.32rem 0.9rem;
+    background: var(--teal-light);
+    border: 1px solid var(--mint-mid);
+    border-radius: 20px;
+    font-size: 0.76rem;
+    color: var(--teal);
+  }
+
+  .btn-start {
+    padding: 1.05rem 3rem;
+    background: var(--teal);
+    border: none;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--white);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.25s;
+    display: inline-block;
+    box-shadow: 0 4px 16px rgba(45,122,122,0.25);
+  }
+
+  .btn-start:hover { background: var(--mint-dark); box-shadow: 0 6px 20px rgba(45,122,122,0.3); }
+
+  .trust-row {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1.75rem;
+    flex-wrap: wrap;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.76rem;
+    color: var(--hint);
+  }
+
+  .trust-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--mint-deep);
+    flex-shrink: 0;
+  }
+
+  /* ─── Transition card ─── */
+  .transition-card {
+    background: var(--teal-light);
+    border: 1px solid var(--mint-mid);
+    border-radius: 12px;
+    padding: 1.1rem 1.35rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .transition-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 1px; }
+
+  .transition-text {
+    font-size: 0.86rem;
+    color: var(--teal);
+    line-height: 1.6;
+  }
+
+  /* ─── Result screen ─── */
+  .result-screen { animation: fadeUp 0.5s ease both; }
+
+  .result-header {
+    text-align: center;
+    padding: 1.75rem 0 1.25rem;
+    border-bottom: 1px solid var(--mint-mid);
+    margin-bottom: 1.75rem;
+  }
+
+  .result-badge {
+    display: inline-block;
+    padding: 0.28rem 1rem;
+    background: var(--teal-light);
+    border: 1px solid var(--mint-mid);
+    border-radius: 20px;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 0.9rem;
+  }
+
+  .result-title {
+    font-family: var(--serif);
+    font-size: clamp(1.35rem, 4vw, 2.2rem);
+    font-weight: 400;
+    color: var(--deep);
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .result-lead {
+    font-size: 0.92rem;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .result-causes {
+    background: var(--white-soft);
+    border: 1px solid var(--mint-mid);
+    border-radius: 12px;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .causes-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--hint);
+    margin-bottom: 0.7rem;
+  }
+
+  .cause-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    color: var(--charcoal);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+
+  .cause-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--mint-dark);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  .product-card {
+    border: 1.5px solid var(--mint-mid);
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 1.4rem;
+    box-shadow: 0 2px 20px rgba(45,122,122,0.08);
+  }
+
+  .product-card-header {
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--accent-pale) 100%);
+    padding: 1rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--mint-mid);
+  }
+
+  .product-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 0.2rem;
+  }
+
+  .product-name {
+    font-family: var(--serif);
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--deep);
+    letter-spacing: 0.02em;
+  }
+
+  .product-tag {
+    padding: 0.25rem 0.75rem;
+    background: var(--white);
+    border: 1px solid var(--mint-mid);
+    border-radius: 20px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .product-body {
+    padding: 1.25rem 1.5rem;
+    background: var(--white);
+  }
+
+  .product-why {
+    font-size: 0.88rem;
+    color: var(--charcoal);
+    line-height: 1.65;
+    margin-bottom: 1rem;
+  }
+
+  .product-short-desc {
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--silver-light);
+  }
+
+  .benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--charcoal);
+  }
+
+  .benefit-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--teal-light);
+    border: 1px solid var(--mint-mid);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--teal);
+  }
+
+  .btn-cta {
+    display: block;
+    width: 100%;
+    padding: 1.1rem;
+    background: var(--teal);
+    border: none;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(45,122,122,0.2);
+  }
+
+  .btn-cta:hover { background: var(--mint-dark); }
+
+  .result-extras {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--mint-mid);
+  }
+
+  .extras-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hint);
+    margin-bottom: 0.7rem;
+  }
+
+  .extra-tip {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    font-size: 0.85rem;
+    color: var(--charcoal);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+
+  .extra-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--silver);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  /* ─── Hide/show ─── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── Footer ─── */
+  footer {
+    padding: 1.25rem 2rem;
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--hint);
+    border-top: 1px solid var(--mint-mid);
+    background: var(--white);
+    line-height: 1.6;
+  }
+
+  /* ─── Product image block ─── */
+  .product-img-wrap {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, var(--teal-light) 0%, var(--mint-bg) 100%);
+    border-bottom: 1px solid var(--mint-mid);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .product-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .product-img-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--hint);
+  }
+
+  .product-img-placeholder svg {
+    opacity: 0.4;
+  }
+
+  .product-img-placeholder span {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hint);
+  }
+
+  .product-short-desc {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--silver-light);
+  }
+
+  /* ─── Offer block (inline card) ─── */
+  .offer-block {
+    background: linear-gradient(135deg, var(--deep) 0%, #1a4040 100%);
+    border-radius: 14px;
+    padding: 1.4rem 1.4rem 1.3rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    border: 1px solid rgba(107,191,191,0.15);
+  }
+  .offer-block-label {
+    font-size: 0.63rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-light);
+    opacity: 0.7;
+    margin-bottom: 0.5rem;
+  }
+  .offer-block-text {
+    font-family: var(--serif);
+    font-size: 1.08rem;
+    font-weight: 400;
+    color: #d4f0f0;
+    line-height: 1.45;
+    margin-bottom: 1.1rem;
+  }
+  .offer-block-text em {
+    color: var(--accent-light);
+    font-style: italic;
+  }
+  .btn-get-discount {
+    display: inline-block;
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    background: linear-gradient(135deg, var(--mint-dark) 0%, var(--teal) 100%);
+    border: none;
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(45,122,122,0.35);
+  }
+  .btn-get-discount:hover { background: linear-gradient(135deg, var(--teal) 0%, #1e6060 100%); transform: translateY(-1px); }
+
+  /* ─── Lead form modal (popup) ─── */
+  .lead-form-block {
+    padding: 0;
+  }
+  .lf-title {
+    font-family: var(--serif);
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: var(--deep);
+    line-height: 1.3;
+    margin-bottom: 0.35rem;
+  }
+  .lf-sub {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 1.25rem;
+  }
+  .lf-product-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    background: var(--teal-light);
+    border: 1px solid var(--mint-mid);
+    border-radius: 20px;
+    font-size: 0.73rem;
+    color: var(--teal);
+    margin-bottom: 1.1rem;
+    font-weight: 500;
+  }
+  .lf-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+  }
+  .lf-fields input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: var(--white-soft);
+    border: 1px solid var(--mint-mid);
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .lf-fields input::placeholder { color: var(--hint); }
+  .lf-fields input:focus { border-color: var(--mint-dark); box-shadow: 0 0 0 3px rgba(45,122,122,0.1); }
+  .btn-lf-submit {
+    display: block;
+    width: 100%;
+    padding: 0.95rem;
+    background: linear-gradient(135deg, var(--mint-dark) 0%, var(--teal) 100%);
+    border: none;
+    border-radius: 10px;
+    font-family: var(--sans);
+    font-size: 0.93rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(45,122,122,0.3);
+  }
+  .btn-lf-submit:hover { background: linear-gradient(135deg, var(--teal) 0%, #1e6060 100%); }
+  .lf-privacy {
+    font-size: 0.68rem;
+    color: var(--hint);
+    text-align: center;
+    margin-top: 0.55rem;
+    line-height: 1.5;
+  }
+
+  /* ─── Modal ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,48,48,0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    backdrop-filter: blur(6px);
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal-box {
+    background: var(--white);
+    border-radius: 22px;
+    padding: 2.5rem 2rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    animation: fadeUp 0.35s ease both;
+    position: relative;
+    border: 1px solid var(--mint-mid);
+    box-shadow: 0 20px 60px rgba(26,48,48,0.25);
+  }
+
+  .modal-ornament {
+    width: 36px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--mint-deep), var(--mint-dark));
+    margin: 0 auto 1.1rem;
+    border-radius: 2px;
+  }
+
+  .modal-eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 0.45rem;
+  }
+
+  .modal-title {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: var(--deep);
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+
+  .modal-sub {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.4rem;
+  }
+
+  .modal-promo-wrap {
+    background: linear-gradient(135deg, var(--deep) 0%, #1a4040 100%);
+    border-radius: 12px;
+    padding: 1rem 1.4rem;
+    margin-bottom: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .modal-promo-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--silver);
+    margin-bottom: 0.15rem;
+    text-align: left;
+  }
+
+  .modal-promo-code {
+    font-family: var(--serif);
+    font-size: 1.8rem;
+    color: var(--accent-light);
+    letter-spacing: 0.06em;
+    text-align: left;
+  }
+
+  .modal-copy-btn {
+    flex-shrink: 0;
+    padding: 0.45rem 0.9rem;
+    background: rgba(107,191,191,0.15);
+    border: 1px solid rgba(107,191,191,0.3);
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 0.73rem;
+    color: var(--accent-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .modal-copy-btn:hover { background: rgba(107,191,191,0.25); }
+  .modal-copy-btn.copied { color: #7fc4a0; border-color: rgba(127,196,160,0.4); }
+
+  .btn-modal-cta {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: var(--teal);
+    border: none;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-size: 0.93rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    transition: all 0.2s;
+    margin-bottom: 0.7rem;
+    box-shadow: 0 4px 14px rgba(45,122,122,0.25);
+  }
+
+  .btn-modal-cta:hover { background: var(--mint-dark); }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--mint-mid);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hint);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { border-color: var(--mint-dark); color: var(--teal); }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 600px) {
+    .card { padding: 1.5rem 1.1rem; }
+    .options-grid.two-col { grid-template-columns: 1fr; }
+    .step-title { font-size: 1.55rem; }
+    .splash-title { font-size: 1.9rem; }
+    header { padding: 1rem 1.25rem; }
+    .result-header { padding: 1.25rem 0 1rem; }
+    .result-lead { font-size: 0.84rem; }
+    .product-card-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .offer-block { padding: 1.2rem 1.1rem 1.1rem; }
+    .offer-block-text { font-size: 0.98rem; }
+    .modal-box { padding: 1.9rem 1.2rem; }
+    .modal-title { font-size: 1.3rem; }
+    .stage { padding: 1.5rem 1rem 2rem; }
+  }
+
+  @media (max-width: 380px) {
+    .result-title { font-size: 1.2rem; }
+    .card { padding: 1.2rem 0.9rem; }
+  }
+</style>
+</head>
+<body>
+<div class="quiz-shell">
+
+  <!-- Header -->
+  <div>
+    <header>
+      <div class="logo">KAN<span>U</span>DA</div>
+      <div class="header-tag">Персональный подбор</div>
+    </header>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-label">
+      <span id="progressText">Начало</span>
+      <span id="progressStep"></span>
+    </div>
+  </div>
+
+  <!-- Stage -->
+  <main class="stage">
+
+    <!-- SPLASH -->
+    <div class="card screen active" id="screen-splash">
+      <div class="splash">
+        <div class="splash-ornament"></div>
+        <h1 class="splash-title">Найдите свой<br><em>источник восстановления</em></h1>
+        <div class="splash-ornament"></div>
+        <p class="splash-lead" style="margin-top:1.25rem">
+          За 3 минуты мы подберём продукт Kanuda, который поможет снизить напряжение именно в вашей зоне дискомфорта.
+        </p>
+        <div class="splash-pills">
+          <span class="pill">8 коротких вопросов</span>
+          <span class="pill">Персональный результат</span>
+          <span class="pill">Скидка 20% в подарок</span>
+        </div>
+        <button class="btn-start" onclick="startQuiz()">Пройти подбор →</button>
+        <div class="trust-row">
+          <div class="trust-item"><div class="trust-dot"></div> Без медицинских диагнозов</div>
+          <div class="trust-item"><div class="trust-dot"></div> Только забота о вас</div>
+          <div class="trust-item"><div class="trust-dot"></div> 100% бесплатно</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q1: Зона дискомфорта -->
+    <div class="card screen" id="screen-1">
+      <div class="step-eyebrow">Шаг 1 из 8</div>
+      <h2 class="step-title">Где чаще всего возникает напряжение или дискомфорт?</h2>
+      <p class="step-subtitle">Выберите одну основную зону — именно туда мы направим внимание.</p>
+      <div class="options-grid two-col">
+        <button class="option-btn" data-key="zone" data-value="head" onclick="select(this)">
+          <span class="option-icon">🧠</span>
+          <div class="option-text">Голова
+            <div class="option-sub">Затылок, виски, давление</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="zone" data-value="neck" onclick="select(this)">
+          <span class="option-icon">🫙</span>
+          <div class="option-text">Шея
+            <div class="option-sub">Скованность, хруст, усталость</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="zone" data-value="upper_back" onclick="select(this)">
+          <span class="option-icon">🔙</span>
+          <div class="option-text">Спина (верхняя)
+            <div class="option-sub">Лопатки, грудной отдел</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="zone" data-value="lower_back" onclick="select(this)">
+          <span class="option-icon">🏋️</span>
+          <div class="option-text">Поясница
+            <div class="option-sub">Нижняя спина, напряжение</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="zone" data-value="pelvis" onclick="select(this)">
+          <span class="option-icon">🦴</span>
+          <div class="option-text">Таз / бёдра
+            <div class="option-sub">Крестец, тазобедренные</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="zone" data-value="full_spine" onclick="select(this)">
+          <span class="option-icon">⚡</span>
+          <div class="option-text">Вся спина целиком
+            <div class="option-sub">Напряжение по всей длине</div>
+          </div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next" id="next-1" onclick="goNext(1)" disabled>Далее →</button>
+      </div>
+      <p class="micro-text">Ваши ответы помогут нам сделать точный и персональный подбор</p>
+    </div>
+
+    <!-- Q2: Когда возникает -->
+    <div class="card screen" id="screen-2">
+      <div class="step-eyebrow">Шаг 2 из 8</div>
+      <h2 class="step-title">Когда чаще всего появляется это ощущение?</h2>
+      <p class="step-subtitle">Время и контекст помогают понять вероятный источник напряжения.</p>
+      <div class="options-grid">
+        <button class="option-btn" data-key="when" data-value="morning" onclick="select(this)">
+          <span class="option-icon">🌅</span>
+          <div class="option-text">Утром, после сна
+            <div class="option-sub">Просыпаюсь уже с дискомфортом</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="when" data-value="work" onclick="select(this)">
+          <span class="option-icon">💻</span>
+          <div class="option-text">В течение рабочего дня
+            <div class="option-sub">После нескольких часов работы</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="when" data-value="evening" onclick="select(this)">
+          <span class="option-icon">🌆</span>
+          <div class="option-text">Вечером, к концу дня
+            <div class="option-sub">Накапливается к ночи</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="when" data-value="always" onclick="select(this)">
+          <span class="option-icon">🔄</span>
+          <div class="option-text">Постоянно, независимо от времени
+            <div class="option-sub">Присутствует большую часть дня</div>
+          </div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next" id="next-2" onclick="goNext(2)" disabled>Далее →</button>
+      </div>
+    </div>
+
+    <!-- Q3: Характер ощущений -->
+    <div class="card screen" id="screen-3">
+      <div class="step-eyebrow">Шаг 3 из 8</div>
+      <h2 class="step-title">Как бы вы описали характер ощущений?</h2>
+      <p class="step-subtitle">Тип ощущения даёт важную подсказку о природе напряжения.</p>
+      <div class="options-grid two-col">
+        <button class="option-btn" data-key="feeling" data-value="tension" onclick="select(this)">
+          <span class="option-icon">🤜</span>
+          <div class="option-text">Скованность и напряжение</div>
+        </button>
+        <button class="option-btn" data-key="feeling" data-value="ache" onclick="select(this)">
+          <span class="option-icon">😶</span>
+          <div class="option-text">Тупая ноющая боль</div>
+        </button>
+        <button class="option-btn" data-key="feeling" data-value="sharp" onclick="select(this)">
+          <span class="option-icon">⚡</span>
+          <div class="option-text">Резкие прострелы</div>
+        </button>
+        <button class="option-btn" data-key="feeling" data-value="pressure" onclick="select(this)">
+          <span class="option-icon">🗜️</span>
+          <div class="option-text">Давление и тяжесть</div>
+        </button>
+        <button class="option-btn" data-key="feeling" data-value="fatigue" onclick="select(this)">
+          <span class="option-icon">😮‍💨</span>
+          <div class="option-text">Усталость и слабость</div>
+        </button>
+        <button class="option-btn" data-key="feeling" data-value="numbness" onclick="select(this)">
+          <span class="option-icon">💤</span>
+          <div class="option-text">Онемение или покалывание</div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next" id="next-3" onclick="goNext(3)" disabled>Далее →</button>
+      </div>
+    </div>
+
+    <!-- Q4: Сидячая нагрузка -->
+    <div class="card screen" id="screen-4">
+      <div class="step-eyebrow">Шаг 4 из 8</div>
+      <h2 class="step-title">Сколько часов в день вы проводите сидя?</h2>
+      <p class="step-subtitle">Это один из ключевых факторов, влияющих на состояние мышц и осанки.</p>
+      <div class="options-grid">
+        <button class="option-btn" data-key="sitting" data-value="low" onclick="select(this)">
+          <span class="option-icon">🚶</span>
+          <div class="option-text">Менее 4 часов
+            <div class="option-sub">Активный образ жизни, много движения</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="sitting" data-value="mid" onclick="select(this)">
+          <span class="option-icon">🪑</span>
+          <div class="option-text">4–6 часов
+            <div class="option-sub">Смешанный режим — сижу и двигаюсь</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="sitting" data-value="high" onclick="select(this)">
+          <span class="option-icon">💻</span>
+          <div class="option-text">6–8 часов
+            <div class="option-sub">Преимущественно офисная работа</div>
+          </div>
+        </button>
+        <button class="option-btn" data-key="sitting" data-value="very_high" onclick="select(this)">
+          <span class="option-icon">🖥️</span>
+          <div class="option-text">Более 8 часов
+            <div class="option-sub">Весь день за компьютером или рулём</div>
+          </div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next" id="next-4" onclick="goNext(4)" disabled>Далее →</button>
+      </div>
+      <div class="transition-card" style="margin-top:1.5rem;margin-bottom:0">
+        <div class="transition-icon">💡</div>
+        <div class="transition-text">Статическая нагрузка — одна из самых частых причин мышечного напряжения. Мы учтём это при подборе.</div>
+      </div>
+    </div>
+
+    <!-- Q5: Качество сна -->
+    <div class="card screen" id="screen-5">
+      <div class="step-eyebrow">Шаг 5 из 8</div>
+      <h2 class="step-title">Как оцениваете качество своего сна?</h2>
+      <p class="step-subtitle">Восстановление во время сна напрямую влияет на состояние мышц и уровень дискомфорта.</p>
+      <div class="options-grid">
+        <button class="option-btn" data-key="sleep_quality" data-value="good" onclick="select(this)">
+          <span class="option-icon">😴</span>
+          <div class="option-text">Сплю хорошо, просыпаюсь отдохнувшим</div>
+        </button>
+        <button class="option-btn" data-key="sleep_quality" data-value="ok" onclick="select(this)">
+          <span class="option-icon">🛌</span>
+          <div class="option-text">В целом нормально, иногда бывают проблемы</div>
+        </button>
+        <button class="option-btn" data-key="sleep_quality" data-value="poor" onclick="select(this)">
+          <span class="option-icon">😔</span>
+          <div class="option-text">Часто просыпаюсь ночью или с трудом засыпаю</div>
+        </button>
+        <button class="option-btn" data-key="sleep_quality" data-value="bad" onclick="select(this)">
+          <span class="option-icon">😩</span>
+          <div class="option-text">Сон неудовлетворительный, просыпаюсь с болью</div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next" id="next-5" onclick="goNext(5)" disabled>Далее →</button>
+      </div>
+    </div>
+
+    <!-- Q6: Поза сна -->
+    <div class="card screen" id="screen-6">
+      <div class="step-eyebrow">Шаг 6 из 8</div>
+      <h2 class="step-title">Как вы чаще всего спите?</h2>
+      <p class="step-subtitle">Поза сна — один из главных факторов восстановления мышц шеи, спины и таза.</p>
+      <div class="options-grid two-col">
+        <button class="option-btn" data-key="sleep_pos" data-value="back" onclick="select(this)">
+          <span class="option-icon">🧘</span>
+          <div class="option-text">На спине</div>
+        </button>
+        <button class="option-btn" data-key="sleep_pos" data-value="side" onclick="select(this)">
+          <span class="option-icon">🌙</span>
+          <div class="option-text">На боку</div>
+        </button>
+        <button class="option-btn" data-key="sleep_pos" data-value="stomach" onclick="select(this)">
+          <span class="option-icon">😪</span>
+          <div class="option-text">На животе</div>
+        </button>
+        <button class="option-btn" data-key="sleep_pos" data-value="varies" onclick="select(this)">
+          <span class="option-icon">🔀</span>
+          <div class="option-text">Меняю позу ночью</div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next" id="next-6" onclick="goNext(6)" disabled>Далее →</button>
+      </div>
+    </div>
+
+    <!-- Q7: Стресс -->
+    <div class="card screen" id="screen-7">
+      <div class="step-eyebrow">Шаг 7 из 8</div>
+      <h2 class="step-title">Как бы вы оценили уровень стресса в вашей жизни?</h2>
+      <p class="step-subtitle">Эмоциональное напряжение часто проявляется физически — особенно в шее, плечах и пояснице.</p>
+      <div class="options-grid">
+        <button class="option-btn" data-key="stress" data-value="low" onclick="select(this)">
+          <span class="option-icon">🌿</span>
+          <div class="option-text">Спокойно — стресс минимален</div>
+        </button>
+        <button class="option-btn" data-key="stress" data-value="mid" onclick="select(this)">
+          <span class="option-icon">⚖️</span>
+          <div class="option-text">Умеренно — бывают напряжённые периоды</div>
+        </button>
+        <button class="option-btn" data-key="stress" data-value="high" onclick="select(this)">
+          <span class="option-icon">🔥</span>
+          <div class="option-text">Часто — работа или жизнь создают давление</div>
+        </button>
+        <button class="option-btn" data-key="stress" data-value="very_high" onclick="select(this)">
+          <span class="option-icon">🌀</span>
+          <div class="option-text">Постоянно — стресс стал привычным фоном</div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next" id="next-7" onclick="goNext(7)" disabled>Далее →</button>
+      </div>
+    </div>
+
+    <!-- Q8: Возраст -->
+    <div class="card screen" id="screen-8">
+      <div class="step-eyebrow">Шаг 8 из 8</div>
+      <h2 class="step-title">Ваша возрастная группа</h2>
+      <p class="step-subtitle">Это последний шаг. Возраст помогает уточнить особенности подбора материалов и жёсткости.</p>
+      <div class="options-grid two-col">
+        <button class="option-btn" data-key="age" data-value="u30" onclick="select(this)">
+          <span class="option-icon">🌱</span>
+          <div class="option-text">До 30 лет</div>
+        </button>
+        <button class="option-btn" data-key="age" data-value="30-45" onclick="select(this)">
+          <span class="option-icon">🌿</span>
+          <div class="option-text">30–45 лет</div>
+        </button>
+        <button class="option-btn" data-key="age" data-value="45-60" onclick="select(this)">
+          <span class="option-icon">🌳</span>
+          <div class="option-text">45–60 лет</div>
+        </button>
+        <button class="option-btn" data-key="age" data-value="60+" onclick="select(this)">
+          <span class="option-icon">🏔️</span>
+          <div class="option-text">60 лет и старше</div>
+        </button>
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()">← Назад</button>
+        <button class="btn-next gold" id="next-8" onclick="showResult()" disabled>Получить результат →</button>
+      </div>
+      <p class="micro-text">Подбираем персональное решение — это займёт секунду</p>
+    </div>
+
+    <!-- RESULT -->
+    <div class="card screen" id="screen-result">
+      <div class="result-screen" id="resultContent"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    © Kanuda — персональный подбор продуктов для восстановления. &nbsp;|&nbsp;
+    Этот квиз носит информационный характер и не является медицинской консультацией.
+  </footer>
+
+</div>
+
+<!-- ─── Lead + Promo Modal ─── -->
+<div class="modal-overlay" id="leadModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeLeadModal()" aria-label="Закрыть">✕</button>
+
+    <!-- Step 1: Form -->
+    <div id="modalStep1">
+      <div class="modal-ornament"></div>
+      <div class="modal-eyebrow">Персональное предложение</div>
+      <h3 class="lf-title">Получите бесплатно доступ к упражнениям и скидку 20% на ваш продукт</h3>
+      <p class="lf-sub">Оставьте контакты — пришлём промокод и персональный план восстановления на вашу зону.</p>
+      <div class="lf-product-chip" id="modalProductChip">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M4 6l1.5 1.5L8 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="modalProductName">Продукт</span>
+      </div>
+      <div class="lf-fields">
+        <input type="text" id="lfName" placeholder="Имя" autocomplete="given-name">
+        <input type="tel" id="lfPhone" placeholder="Телефон" autocomplete="tel">
+        <input type="email" id="lfEmail" placeholder="Email" autocomplete="email">
+      </div>
+      <button class="btn-lf-submit" onclick="submitLeadForm()">Получить скидку →</button>
+      <p class="lf-privacy">Нажимая кнопку, вы соглашаетесь на обработку персональных данных</p>
+    </div>
+
+    <!-- Step 2: Promo code -->
+    <div id="modalStep2" style="display:none">
+      <div class="modal-ornament"></div>
+      <div class="modal-eyebrow">Готово</div>
+      <h3 class="modal-title">Ваш промокод</h3>
+      <p class="modal-sub">Спасибо! Материалы с упражнениями уже отправляем. Используйте промокод при оформлении заказа.</p>
+      <div class="modal-promo-wrap">
+        <div>
+          <div class="modal-promo-label">Промокод</div>
+          <div class="modal-promo-code">KANUDA20</div>
+        </div>
+        <button class="modal-copy-btn" id="copyBtn" onclick="copyPromo()">Скопировать</button>
+      </div>
+      <a href="#" class="btn-modal-cta" id="modalProductLink" target="_blank">Перейти к продукту →</a>
+      <p style="font-size:0.73rem; color:var(--hint);">Скидка 20% · Действует 7 дней</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const state = { current: 'splash', answers: {}, history: [] };
+
+  const screens = ['splash','1','2','3','4','5','6','7','8','result'];
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById('screen-' + id);
+    if (el) { el.classList.add('active'); el.scrollIntoView({behavior:'smooth',block:'start'}); }
+    updateProgress(id);
+    state.current = id;
+  }
+
+  function updateProgress(id) {
+    const num = parseInt(id);
+    if (!num) { 
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('progressText').textContent = 'Начало';
+      document.getElementById('progressStep').textContent = '';
+      return; 
+    }
+    const pct = (num / 8) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = 'Шаг ' + num + ' из 8';
+    document.getElementById('progressStep').textContent = Math.round(pct) + '%';
+  }
+
+  function startQuiz() {
+    state.history.push('splash');
+    showScreen('1');
+  }
+
+  function select(btn) {
+    const key = btn.dataset.key;
+    document.querySelectorAll(`[data-key="${key}"]`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state.answers[key] = btn.dataset.value;
+    const stepNum = state.current;
+    const nextBtn = document.getElementById('next-' + stepNum);
+    if (nextBtn) nextBtn.disabled = false;
+  }
+
+  function goNext(step) {
+    const nextId = String(step + 1);
+    state.history.push(String(step));
+    showScreen(nextId);
+  }
+
+  function goBack() {
+    const prev = state.history.pop();
+    if (prev) showScreen(prev); else showScreen('splash');
+  }
+
+  // ─── Product logic ───
+  const products = {
+    blue_piano: {
+      name: 'ПОДУШКА BLUE LABEL PIANO',
+      url: 'https://kanuda.ru/shop/blue-label-piano-pillow',
+      tag: 'Для сна и отдыха',
+      img: ''
+    },
+    gold_primo: {
+      name: 'ПОДУШКА GOLD LABEL PRIMO AIR',
+      url: 'https://kanuda.ru/shop/gold-label-primo-air-pillow',
+      tag: 'Премиум подушка',
+      img: ''
+    },
+    head_nap: {
+      name: 'НЭП для головы',
+      url: 'https://kanuda.ru/shop/head-nap',
+      tag: 'Снятие напряжения',
+      img: ''
+    },
+    waist_nap: {
+      name: 'НЭП для поясницы',
+      url: 'https://kanuda.ru/shop/waist-nap',
+      tag: 'Поясничная поддержка',
+      img: ''
+    },
+    spine: {
+      name: 'НЭП для позвоночника',
+      url: 'https://kanuda.ru/shop/spine',
+      tag: 'Для всего позвоночника',
+      img: ''
+    },
+    soma_nap: {
+      name: 'НЭП ДЛЯ ШЕИ III (SOMA)',
+      url: 'https://kanuda.ru/shop/soma-nap',
+      tag: 'Полное расслабление',
+      img: ''
+    },
+    pelvic: {
+      name: 'НЭП для поясницы и таза',
+      url: 'https://kanuda.ru/shop/pelvic-balance-nap',
+      tag: 'Тазовый баланс',
+      img: ''
+    }
+  };
+
+  function getResult(a) {
+    const zone = a.zone;
+    const when = a.when;
+    const sitting = a.sitting;
+    const sleep_q = a.sleep_quality;
+    const stress = a.stress;
+
+    // Scoring map
+    let recommendation = null;
+    let causes = [];
+    let benefits = [];
+    let extras = [];
+    let title = '';
+
+    if (zone === 'head') {
+      recommendation = products.head_nap;
+      title = 'Ваше состояние может быть связано с напряжением в области шеи и затылка';
+      causes = [
+        'Возможное накопленное мышечное напряжение в шейно-затылочной зоне',
+        'Статическая нагрузка при работе за экраном часто влияет на кровоснабжение затылка',
+        stress === 'high' || stress === 'very_high' ? 'Повышенный уровень стресса нередко «концентрируется» в плечах и затылке' : null,
+        when === 'morning' ? 'Дискомфорт по утрам часто связан с положением головы во время сна' : null
+      ].filter(Boolean);
+      benefits = ['Снижает давление на шейный отдел', 'Способствует расслаблению подзатылочных мышц', 'Помогает улучшить качество отдыха', 'Создаёт анатомически правильное положение головы'];
+      extras = ['Старайтесь делать 5-минутные перерывы каждые 45 минут работы', 'Простые упражнения на растяжку шеи помогут усилить эффект', 'Обратите внимание на высоту монитора — она влияет на шею'];
+    }
+    else if (zone === 'neck') {
+      if (sitting === 'high' || sitting === 'very_high' || when === 'work') {
+        recommendation = products.head_nap;
+      } else if (when === 'morning' || sleep_q === 'bad' || sleep_q === 'poor') {
+        recommendation = products.blue_piano;
+      } else {
+        recommendation = products.gold_primo;
+      }
+      title = 'Напряжение в шее может быть связано с длительной статической позой и особенностями сна';
+      causes = [
+        'Длительное пребывание в одной позе создаёт хроническое напряжение в мышцах шеи',
+        sitting === 'high' || sitting === 'very_high' ? 'Работа за компьютером более 6 часов — один из ключевых факторов напряжения в шейном отделе' : null,
+        when === 'morning' ? 'Дискомфорт после сна часто указывает на несоответствие подушки анатомии вашей шеи' : null,
+        stress !== 'low' ? 'Стресс нередко «живёт» в плечах и шее в виде постоянного мышечного напряжения' : null
+      ].filter(Boolean);
+      benefits = ['Поддерживает физиологический изгиб шеи', 'Снижает нагрузку на межпозвонковые диски', 'Способствует расслаблению мышц во время сна', 'Помогает просыпаться без утренней скованности'];
+      extras = ['Попробуйте класть небольшой валик под шею во время отдыха', 'Тепловые процедуры на шею вечером помогают расслабить мышцы', 'Плавание или йога могут хорошо дополнить использование продукта'];
+    }
+    else if (zone === 'upper_back') {
+      if (stress === 'high' || stress === 'very_high') {
+        recommendation = products.soma_nap;
+      } else {
+        recommendation = products.spine;
+      }
+      title = 'Напряжение в верхней части спины часто связано со стрессом и статической нагрузкой';
+      causes = [
+        'Длительное сидение без опоры для спины создаёт нагрузку на грудной отдел',
+        'Накопленное мышечное напряжение в области лопаток — частый спутник офисной работы',
+        stress !== 'low' ? 'Эмоциональный стресс нередко отражается именно в области верхней спины и плеч' : null,
+        'Положение «голова вперёд» при работе за экраном перегружает верхнюю часть спины'
+      ].filter(Boolean);
+      benefits = ['Снижает нагрузку на мышцы-разгибатели спины', 'Помогает восстановить нормальный тонус трапециевидной мышцы', 'Способствует расслаблению и снятию накопленного напряжения', 'Поддерживает грудной отдел в период восстановления'];
+      extras = ['Дыхательные упражнения помогают снять напряжение в грудном отделе', 'Растяжка грудных мышц снижает нагрузку на верхнюю спину', 'Обратите внимание на высоту стула и положение локтей при работе'];
+    }
+    else if (zone === 'lower_back') {
+      if (sitting === 'high' || sitting === 'very_high') {
+        recommendation = products.waist_nap;
+      } else if (a.sleep_pos === 'stomach') {
+        recommendation = products.pelvic;
+      } else {
+        recommendation = products.waist_nap;
+      }
+      title = 'Дискомфорт в пояснице может быть связан со статической нагрузкой и ослаблением поддержки спины';
+      causes = [
+        'Длительное сидение без поясничной поддержки — одна из частых причин напряжения в нижней части спины',
+        a.sleep_pos === 'stomach' ? 'Сон на животе может создавать дополнительную нагрузку на поясничный отдел' : null,
+        sitting === 'high' || sitting === 'very_high' ? 'При работе более 6 часов поясничные мышцы устают удерживать тело в вертикальном положении' : null,
+        stress !== 'low' ? 'Хроническое напряжение нередко концентрируется в поясничном отделе' : null
+      ].filter(Boolean);
+      benefits = ['Поддерживает поясничный лордоз в анатомически правильном положении', 'Снижает нагрузку на межпозвонковые диски поясничного отдела', 'Помогает уменьшить усталость при длительном сидении', 'Способствует расслаблению поясничных мышц'];
+      extras = ['Укрепление мышц кора снизит нагрузку на поясницу', 'Старайтесь вставать каждый час при сидячей работе', 'Тёплый душ на поясницу вечером помогает снять накопленное напряжение'];
+    }
+    else if (zone === 'pelvis') {
+      recommendation = products.pelvic;
+      title = 'Состояние в области таза и бёдер может быть связано с дисбалансом в нижней части тела';
+      causes = [
+        'Длительное сидение создаёт дополнительное давление на тазовую область',
+        'Дисбаланс мышц бёдер и ягодиц нередко влияет на самочувствие в области крестца',
+        a.sleep_pos === 'stomach' ? 'Сон на животе может способствовать перекосу тазового пояса' : null,
+        'Напряжение в тазобедренных суставах часто связано с ограниченным движением в течение дня'
+      ].filter(Boolean);
+      benefits = ['Помогает выровнять положение таза', 'Снижает напряжение в крестцово-подвздошной зоне', 'Способствует расслаблению мышц бёдер и ягодиц', 'Улучшает качество сна через снятие тазового напряжения'];
+      extras = ['Упражнения на растяжку сгибателей бёдер помогут усилить эффект', 'Ходьба — одно из лучших средств для активации мышц таза', 'Обратите внимание на симметричность позы при сидении'];
+    }
+    else if (zone === 'full_spine') {
+      recommendation = products.spine;
+      title = 'Напряжение по всей длине спины может быть связано с общей статической нагрузкой и особенностями сна';
+      causes = [
+        'Длительное пребывание в одной позе создаёт накопленное напряжение по всей длине позвоночника',
+        stress !== 'low' ? 'Хронический стресс нередко проявляется в виде диффузного напряжения по всей спине' : null,
+        sleep_q === 'bad' || sleep_q === 'poor' ? 'Неудовлетворительный сон не позволяет мышцам спины полноценно восстановиться' : null,
+        'Мышечный корсет требует регулярного расслабления и восстановления'
+      ].filter(Boolean);
+      benefits = ['Обеспечивает поддержку по всей длине позвоночника', 'Помогает снять накопленное напряжение от шеи до крестца', 'Способствует восстановлению физиологических изгибов', 'Создаёт условия для полноценного расслабления'];
+      extras = ['Регулярная растяжка всей спины усилит эффект от продукта', 'Плавание — одно из лучших занятий для здоровья позвоночника', 'Обратите внимание на матрас — он должен поддерживать спину в нейтральном положении'];
+    }
+
+    return { recommendation, title, causes, benefits, extras };
+  }
+
+  let currentProductUrl = '#';
+  let currentProductName = '';
+
+  function showResult() {
+    const a = state.answers;
+    const res = getResult(a);
+    state.history.push('8');
+
+    const prod = res.recommendation;
+    currentProductUrl = prod.url;
+    currentProductName = prod.name;
+
+    const causesHTML = res.causes.map(c => `
+      <div class="cause-item"><div class="cause-dot"></div>${c}</div>
+    `).join('');
+
+    const benefitsHTML = res.benefits.map(b => `
+      <div class="benefit-item">
+        <div class="benefit-check">✓</div>
+        ${b}
+      </div>
+    `).join('');
+
+    const extrasHTML = res.extras.map(e => `
+      <div class="extra-tip"><div class="extra-dot"></div>${e}</div>
+    `).join('');
+
+    const imgHTML = prod.img
+      ? `<img src="${prod.img}" alt="${prod.name}">`
+      : `<div class="product-img-placeholder">
+           <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <rect x="6" y="10" width="36" height="28" rx="4" stroke="var(--mint-deep)" stroke-width="1.5"/>
+             <circle cx="18" cy="21" r="4" stroke="var(--mint-deep)" stroke-width="1.5"/>
+             <path d="M6 32l9-8 7 6 5-5 15 13" stroke="var(--mint-deep)" stroke-width="1.5" stroke-linejoin="round"/>
+           </svg>
+           <span>Фото товара</span>
+         </div>`;
+
+    document.getElementById('resultContent').innerHTML = `
+      <div class="result-header">
+        <div class="result-badge">Персональный результат</div>
+        <h2 class="result-title">${res.title}</h2>
+        <p class="result-lead">На основе ваших ответов мы подобрали продукт, который может помочь снизить напряжение и улучшить качество восстановления.</p>
+      </div>
+
+      <div class="result-causes">
+        <div class="causes-title">Вероятные причины дискомфорта</div>
+        ${causesHTML}
+      </div>
+
+      <div class="product-card">
+        <div class="product-img-wrap">${imgHTML}</div>
+        <div class="product-card-header">
+          <div>
+            <div class="product-label">Рекомендованный продукт</div>
+            <div class="product-name">${prod.name}</div>
+          </div>
+          <div class="product-tag">${prod.tag}</div>
+        </div>
+        <div class="product-body">
+          <p class="product-short-desc">Продукт помогает снизить напряжение и дискомфорт за счёт уникальной анатомической технологии поддержки и расслабления.</p>
+          <div class="benefits-list">${benefitsHTML}</div>
+
+          <div class="offer-block">
+            <div class="offer-block-label">Специальное предложение</div>
+            <p class="offer-block-text">Получите бесплатно доступ к упражнениям и дополнительную скидку <em>20%</em> на приобретение готового решения от боли</p>
+            <button class="btn-get-discount" onclick="openLeadModal('${prod.url}', '${prod.name}')">
+              Получить скидку
+            </button>
+          </div>
+
+
+        </div>
+      </div>
+
+      <div class="result-extras">
+        <div class="extras-title">Дополнительные рекомендации</div>
+        ${extrasHTML}
+      </div>
+
+      <div style="margin-top:1.5rem; padding:1rem; background:var(--white-soft); border-radius:10px; text-align:center; border:1px solid var(--mint-mid);">
+        <p style="font-size:0.8rem; color:var(--hint); line-height:1.6">
+          Если дискомфорт сохраняется длительное время или усиливается — рекомендуем обратиться к специалисту.<br>
+          Kanuda заботится о вашем восстановлении, но не заменяет медицинскую помощь.
+        </p>
+      </div>
+
+      <div style="margin-top:1.25rem; text-align:center;">
+        <button onclick="location.reload()" style="background:transparent; border:1px solid var(--mint-mid); border-radius:8px; padding:0.65rem 1.5rem; font-family:var(--sans); font-size:0.85rem; color:var(--hint); cursor:pointer; transition:all 0.2s;">
+          Пройти заново
+        </button>
+      </div>
+    `;
+
+    showScreen('result');
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressText').textContent = 'Готово';
+    document.getElementById('progressStep').textContent = '100%';
+  }
+
+  // ── Lead modal ──
+  function openLeadModal(url, name) {
+    currentProductUrl = url || currentProductUrl;
+    currentProductName = name || currentProductName;
+
+    // Reset to step 1
+    document.getElementById('modalStep1').style.display = 'block';
+    document.getElementById('modalStep2').style.display = 'none';
+
+    // Set product chip label
+    document.getElementById('modalProductName').textContent = currentProductName;
+
+    // Clear previous inputs
+    ['lfName','lfPhone','lfEmail'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    document.getElementById('leadModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function submitLeadForm() {
+    const name  = document.getElementById('lfName')?.value.trim();
+    const phone = document.getElementById('lfPhone')?.value.trim();
+    const email = document.getElementById('lfEmail')?.value.trim();
+
+    if (!name && !phone && !email) {
+      document.getElementById('lfName')?.focus();
+      // shake the first field
+      const inp = document.getElementById('lfName');
+      if (inp) { inp.style.borderColor = 'var(--mint-dark)'; inp.focus(); }
+      return;
+    }
+
+    // Set product link for step 2
+    document.getElementById('modalProductLink').href = currentProductUrl;
+
+    // Transition to step 2 with mini animation
+    const s1 = document.getElementById('modalStep1');
+    s1.style.opacity = '0';
+    s1.style.transition = 'opacity 0.25s';
+    setTimeout(() => {
+      s1.style.display = 'none';
+      s1.style.opacity = '';
+      s1.style.transition = '';
+      const s2 = document.getElementById('modalStep2');
+      s2.style.display = 'block';
+      s2.style.opacity = '0';
+      s2.style.transition = 'opacity 0.3s';
+      requestAnimationFrame(() => { s2.style.opacity = '1'; });
+      setTimeout(() => { s2.style.transition = ''; }, 350);
+    }, 250);
+  }
+
+  function closeLeadModal() {
+    document.getElementById('leadModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function copyPromo() {
+    const write = () => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Скопировано ✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Скопировать'; btn.classList.remove('copied'); }, 2200);
+    };
+    navigator.clipboard.writeText('KANUDA20').then(write).catch(() => {
+      const el = document.createElement('textarea');
+      el.value = 'KANUDA20';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      write();
+    });
+  }
+
+  // Close modal on overlay click
+  document.getElementById('leadModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLeadModal();
+  });
+</script>
+</body>
+</html>
